@@ -380,9 +380,12 @@
         let deleteId = null; 
         let isBalanceHidden = false;
         let currentTotalBalance = 0;
-        let transactions = [];
+        
+        // 1. INSTANT LOAD OPTIMIZATION: Pull from localStorage immediately before Firebase connects
+        let transactions = JSON.parse(localStorage.getItem('cachedTransactions')) || [];
+        renderApp(); // Render UI immediately on page load
 
-        // Realtime Database Listener
+        // Realtime Database Listener (Syncs data in background)
         const transactionsRef = ref(db, 'transactions');
         onValue(transactionsRef, (snapshot) => {
             const data = snapshot.val();
@@ -392,6 +395,8 @@
                     transactions.push({ id: key, ...value });
                 }
             }
+            // Update local cache for the next fast refresh
+            localStorage.setItem('cachedTransactions', JSON.stringify(transactions));
             renderApp();
         });
 
@@ -497,10 +502,12 @@
                     createdAt: existingTransaction.createdAt, 
                     updatedAt: currentTime 
                 };
-                update(ref(db, `transactions/${editId}`), updatedData).then(() => {
-                    showToast('Updated Successfully');
-                    closeAndResetModal();
-                });
+                
+                // 2. INSTANT SAVE OPTIMIZATION: Request sent to Firebase, UI updates immediately without waiting
+                update(ref(db, `transactions/${editId}`), updatedData);
+                showToast('Updated Successfully');
+                closeAndResetModal();
+                
             } else {
                 const newData = {
                     text: transactionText,
@@ -509,10 +516,11 @@
                     createdAt: currentTime, 
                     updatedAt: null
                 };
-                set(push(ref(db, 'transactions')), newData).then(() => {
-                    showToast('Saved Successfully');
-                    closeAndResetModal();
-                });
+                
+                // 2. INSTANT SAVE OPTIMIZATION: Request sent to Firebase, UI updates immediately without waiting
+                set(push(ref(db, 'transactions')), newData);
+                showToast('Saved Successfully');
+                closeAndResetModal();
             }
         }
 
@@ -596,11 +604,11 @@
 
         confirmDeleteBtn.addEventListener('click', () => {
             if (deleteId !== null) {
-                remove(ref(db, `transactions/${deleteId}`)).then(() => {
-                    showToast('Deleted Successfully', 'fa-trash', 'text-rose-400');
-                    if (editId === deleteId) { closeAndResetModal(); }
-                    closeDeleteModalFunc(); 
-                });
+                // INSTANT DELETE OPTIMIZATION
+                remove(ref(db, `transactions/${deleteId}`));
+                showToast('Deleted Successfully', 'fa-trash', 'text-rose-400');
+                if (editId === deleteId) { closeAndResetModal(); }
+                closeDeleteModalFunc(); 
             }
         });
 
