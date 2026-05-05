@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- Strictly prevents Zoom In/Out on all mobile devices -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no">
+    <title>Pro Expense | Smart Tracker</title>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Outfit for a very modern Fintech look) -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Outfit', 'sans-serif'] },
+                    colors: {
+                        brand: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 900: '#1e3a8a', 950: '#172554' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f8fafc; /* Sleek slate-50 background */
+            -webkit-tap-highlight-color: transparent; /* Removes blue tap highlight on mobile */
+        }
+
+        /* 16px font-size on inputs strictly prevents iOS Safari Auto-Zoom */
+        .input-field {
+            font-size: 16px; 
+            padding: 14px 16px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px;
+            width: 100%;
+            transition: all 0.2s ease;
+            background-color: #f8fafc;
+            color: #0f172a;
+            font-weight: 500;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background-color: #ffffff;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .label-text {
+            font-size: 13px;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 8px;
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* Dynamic JS List Styling */
+        .list {
+            list-style-type: none;
+            padding-right: 4px;
+            padding-bottom: 80px; /* Space for FAB */
+        }
+
+        .list::-webkit-scrollbar { width: 4px; }
+        .list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        .list-item {
+            background-color: #ffffff;
+            border: 1px solid #f1f5f9;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: slideUp 0.3s ease-out forwards;
+        }
+
+        .list-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 20px -8px rgba(0, 0, 0, 0.08);
+            border-color: #e2e8f0;
+        }
+
+        .item-details-panel {
+            display: none;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px dashed #e2e8f0;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        /* Floating Action Button */
+        .fab {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            border-radius: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.5);
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 50;
+        }
+        
+        .fab:hover { 
+            transform: scale(1.05) translateY(-2px); 
+            box-shadow: 0 15px 30px -5px rgba(37, 99, 235, 0.6);
+        }
+
+        .fab:active { transform: scale(0.95); }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .toast {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            color: #fff;
+            padding: 14px 28px;
+            border-radius: 100px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        /* Hide scrollbar for cleanly designed fixed sidebars */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col">
+
+    <!-- App Header -->
+    <header class="bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex items-center shrink-0 z-10 relative">
+        <div class="max-w-6xl mx-auto w-full flex items-center justify-center gap-3">
+            <div class="bg-brand-950 p-2 rounded-xl shadow-inner">
+                <i class="fa-solid fa-layer-group text-white text-lg w-6 h-6 flex items-center justify-center"></i>
+            </div>
+            <div class="text-left">
+                <h1 class="text-xl font-extrabold text-slate-900 tracking-tight leading-none">Pro<span class="text-brand-600">Expense</span></h1>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 flex flex-col lg:flex-row gap-6 lg:gap-10 overflow-hidden">
+        
+        <!-- Left Column: Balance & Stats -->
+        <div class="w-full lg:w-[420px] flex flex-col gap-5 shrink-0 overflow-y-auto no-scrollbar pb-10">
+            
+            <!-- Sleek Premium Balance Card -->
+            <div class="bg-gradient-to-br from-brand-900 via-brand-950 to-slate-900 rounded-[24px] p-8 shadow-xl shadow-brand-900/20 relative overflow-hidden text-white">
+                <!-- Abstract Design Elements -->
+                <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl -mr-10 -mt-10"></div>
+                <div class="absolute bottom-0 left-0 w-24 h-24 bg-brand-500/20 rounded-full blur-xl -ml-5 -mb-5"></div>
+                
+                <div class="relative z-10">
+                    <div class="flex justify-between items-center mb-6">
+                        <h4 class="text-xs font-semibold text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                            <i class="fa-solid fa-wallet opacity-70"></i> Total Balance
+                        </h4>
+                        <i class="fa-brands fa-nfc-symbol text-slate-400 text-xl opacity-50"></i>
+                    </div>
+                    
+                    <div class="flex items-center gap-3 mb-2">
+                        <h1 id="balance" class="text-4xl sm:text-5xl font-extrabold tracking-tight">₹0.00</h1>
+                        <button id="toggle-balance-btn" class="text-slate-400 hover:text-white transition-colors focus:outline-none">
+                            <i id="toggle-balance-icon" class="fa-solid fa-eye text-xl mt-1"></i>
+                        </button>
+                    </div>
+                    
+                    <p class="text-sm font-medium text-slate-400 mt-6 tracking-widest">**** **** **** 1624</p>
+                </div>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="flex gap-4">
+                <!-- Income -->
+                <div class="flex-1 bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-arrow-down text-lg"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-0.5">Income</h4>
+                        <p id="money-plus" class="text-lg font-bold text-slate-800">₹0.00</p>
+                    </div>
+                </div>
+                <!-- Expense -->
+                <div class="flex-1 bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-arrow-up text-lg"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-0.5">Expense</h4>
+                        <p id="money-minus" class="text-lg font-bold text-slate-800">₹0.00</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: History Area -->
+        <div class="flex-1 w-full flex flex-col min-h-0">
+            <!-- Header -->
+            <div class="flex justify-between items-center pb-4 mb-2 shrink-0">
+                <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    Recent Transactions
+                    <span id="history-count" class="bg-slate-100 text-slate-500 text-xs py-1 px-2.5 rounded-full font-bold">0</span>
+                </h3>
+                <i class="fa-solid fa-sliders text-slate-400 hover:text-slate-600 cursor-pointer transition-colors"></i>
+            </div>
+            
+            <!-- Scrollable Transaction List -->
+            <ul id="list" class="list flex-1 overflow-y-auto min-h-0">
+                <!-- Transactions will be inserted here via JS -->
+            </ul>
+        </div>
+    </main>
+
+    <!-- Floating Action Button -->
+    <button class="fab" id="fab" title="Add New Transaction">
+        <i class="fa-solid fa-plus"></i>
+    </button>
+
+    <!-- Modal Form (Add/Edit) -->
+    <div class="modal" id="transaction-modal">
+        <div class="bg-white p-8 rounded-[24px] max-w-sm w-full shadow-2xl relative">
+            <button id="close-modal" class="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            
+            <h3 class="text-2xl font-extrabold text-slate-900 mb-6" id="modal-title">New Record</h3>
+            
+            <form id="form" class="space-y-5">
+                <div>
+                    <label for="type" class="label-text">Type</label>
+                    <select id="type" class="input-field cursor-pointer">
+                        <option value="wealth">💰 Income</option>
+                        <option value="expense">🛒 Expense</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="text" class="label-text">Description</label>
+                    <input type="text" id="text" placeholder="e.g., Groceries, Salary..." autocomplete="off" class="input-field" />
+                </div>
+                <div>
+                    <label for="amount" class="label-text">Amount (₹)</label>
+                    <input type="number" id="amount" placeholder="0.00" step="0.01" class="input-field font-bold text-lg" />
+                </div>
+                <div class="pt-4">
+                    <button type="submit" id="submit-btn" class="w-full bg-slate-900 text-white text-base font-bold py-4 rounded-xl hover:bg-slate-800 transition-colors shadow-lg shadow-slate-900/20">
+                        Save Transaction
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Form (Delete Confirmation) -->
+    <div class="modal" id="delete-modal">
+        <div class="bg-white p-8 rounded-[24px] max-w-[340px] w-full shadow-2xl relative text-center">
+            <div class="mx-auto w-16 h-16 bg-rose-100 text-rose-500 rounded-full flex items-center justify-center mb-5">
+                <i class="fa-solid fa-trash-can text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-extrabold text-slate-900 mb-2">Delete Record?</h3>
+            <p class="text-sm text-slate-500 mb-8 font-medium">This action cannot be undone. The transaction will be removed from your history.</p>
+            <div class="flex gap-3">
+                <button id="cancel-delete-btn" class="flex-1 px-4 py-3.5 bg-slate-100 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-200 transition-colors">Cancel</button>
+                <button id="confirm-delete-btn" class="flex-1 px-4 py-3.5 bg-rose-500 text-white rounded-xl text-sm font-bold hover:bg-rose-600 transition-colors shadow-lg shadow-rose-500/30">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-analytics.js";
+        import { getDatabase, ref, onValue, push, set, update, remove } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCPXncg-QmqDketytNT9V7Ac_4DYBzFOZM",
+            authDomain: "expense-tracker-6175c.firebaseapp.com",
+            databaseURL: "https://expense-tracker-6175c-default-rtdb.firebaseio.com",
+            projectId: "expense-tracker-6175c",
+            storageBucket: "expense-tracker-6175c.firebasestorage.app",
+            messagingSenderId: "812043413259",
+            appId: "1:812043413259:web:5474fe7e9993c299a8a40e",
+            measurementId: "G-MSE28782V0"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const db = getDatabase(app);
+
+        // DOM Elements
+        const balance = document.getElementById('balance');
+        const money_plus = document.getElementById('money-plus');
+        const money_minus = document.getElementById('money-minus');
+        const list = document.getElementById('list');
+        const form = document.getElementById('form');
+        const text = document.getElementById('text');
+        const amount = document.getElementById('amount');
+        const type = document.getElementById('type');
+        const submitBtn = document.getElementById('submit-btn');
+        const modal = document.getElementById('transaction-modal');
+        const fab = document.getElementById('fab');
+        const closeModal = document.getElementById('close-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const historyCount = document.getElementById('history-count');
+        const toggleBalanceBtn = document.getElementById('toggle-balance-btn');
+        const toggleBalanceIcon = document.getElementById('toggle-balance-icon');
+        const deleteModal = document.getElementById('delete-modal');
+        const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+        const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+
+        let editId = null;
+        let deleteId = null; 
+        let isBalanceHidden = false;
+        let currentTotalBalance = 0;
+        let transactions = [];
+
+        // Realtime Database Listener
+        const transactionsRef = ref(db, 'transactions');
+        onValue(transactionsRef, (snapshot) => {
+            const data = snapshot.val();
+            transactions = [];
+            if (data) {
+                for (const [key, value] of Object.entries(data)) {
+                    transactions.push({ id: key, ...value });
+                }
+            }
+            renderApp();
+        });
+
+        function formatINR(number) {
+            return new Intl.NumberFormat('en-IN', {
+                style: 'currency',
+                currency: 'INR',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(number);
+        }
+
+        function getFormattedDate() {
+            const now = new Date();
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = now.getFullYear();
+            let hours = now.getHours();
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            
+            hours = hours % 12;
+            hours = hours ? hours : 12; 
+            const strHours = String(hours).padStart(2, '0');
+            
+            return `${day}-${month}-${year}, ${strHours}:${minutes} ${ampm}`;
+        }
+
+        function showToast(message, icon = 'fa-check-circle', color = 'text-emerald-400') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `<i class="fa-solid ${icon} ${color} text-lg"></i> ${message}`;
+            container.appendChild(toast);
+            
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 400);
+            }, 3000);
+        }
+
+        function openModal(title = 'New Record', buttonText = 'Save Transaction') {
+            modalTitle.innerText = title;
+            submitBtn.innerText = buttonText;
+            modal.style.display = 'flex';
+        }
+
+        function closeAndResetModal() {
+            modal.style.display = 'none';
+            editId = null;
+            text.value = '';
+            amount.value = '';
+            type.value = 'wealth';
+        }
+
+        function closeDeleteModalFunc() {
+            deleteModal.style.display = 'none';
+            deleteId = null;
+        }
+
+        fab.addEventListener('click', () => {
+            closeAndResetModal();
+            openModal();
+        });
+        
+        closeModal.addEventListener('click', closeAndResetModal);
+        cancelDeleteBtn.addEventListener('click', closeDeleteModalFunc);
+
+        window.addEventListener('click', (e) => {
+            if (e.target === modal) closeAndResetModal();
+            if (e.target === deleteModal) closeDeleteModalFunc();
+        });
+
+        toggleBalanceBtn.addEventListener('click', () => {
+            isBalanceHidden = !isBalanceHidden;
+            if (isBalanceHidden) {
+                toggleBalanceIcon.classList.replace('fa-eye', 'fa-eye-slash');
+                balance.innerText = '₹ * * * * * *';
+            } else {
+                toggleBalanceIcon.classList.replace('fa-eye-slash', 'fa-eye');
+                balance.innerText = formatINR(currentTotalBalance);
+            }
+        });
+
+        function addTransaction(e) {
+            e.preventDefault();
+
+            if (amount.value.trim() === '') {
+                showToast('Please provide an amount.', 'fa-triangle-exclamation', 'text-amber-400');
+                return;
+            }
+
+            const transactionText = text.value.trim() === '' ? 'Unknown' : text.value;
+            const currentTime = getFormattedDate();
+
+            if (editId !== null) {
+                const existingTransaction = transactions.find(t => t.id === editId);
+                const updatedData = {
+                    text: transactionText,
+                    amount: +amount.value,
+                    type: type.value,
+                    createdAt: existingTransaction.createdAt, 
+                    updatedAt: currentTime 
+                };
+                update(ref(db, `transactions/${editId}`), updatedData).then(() => {
+                    showToast('Updated Successfully');
+                    closeAndResetModal();
+                });
+            } else {
+                const newData = {
+                    text: transactionText,
+                    amount: +amount.value,
+                    type: type.value,
+                    createdAt: currentTime, 
+                    updatedAt: null
+                };
+                set(push(ref(db, 'transactions')), newData).then(() => {
+                    showToast('Saved Successfully');
+                    closeAndResetModal();
+                });
+            }
+        }
+
+        window.toggleDetails = function(id) {
+            const detailsDiv = document.getElementById(`details-${id}`);
+            if (detailsDiv.style.display === 'block') {
+                detailsDiv.style.display = 'none';
+            } else {
+                document.querySelectorAll('.item-details-panel').forEach(el => el.style.display = 'none');
+                detailsDiv.style.display = 'block';
+            }
+        }
+
+        function addTransactionDOM(transaction) {
+            const isExpense = transaction.type === 'expense';
+            const sign = isExpense ? '-' : '+';
+            
+            const iconBg = isExpense ? 'bg-rose-50 text-rose-500' : 'bg-emerald-50 text-emerald-500';
+            const icon = isExpense ? 'fa-arrow-up' : 'fa-arrow-down';
+            const amountColor = isExpense ? 'text-slate-800' : 'text-emerald-600';
+            
+            const item = document.createElement('li');
+            item.className = 'list-item';
+            
+            const createdStr = transaction.createdAt || 'Unknown time';
+            const updatedStr = transaction.updatedAt ? ` • Edited: ${transaction.updatedAt}` : '';
+
+            item.innerHTML = `
+                <div class="flex justify-between items-center w-full" onclick="toggleDetails('${transaction.id}')">
+                    <div class="flex items-center gap-4 min-w-0">
+                        <div class="w-12 h-12 rounded-full ${iconBg} flex items-center justify-center shrink-0">
+                            <i class="fa-solid ${icon}"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <h4 class="text-[15px] font-bold text-slate-800 truncate">${transaction.text}</h4>
+                            <p class="text-[11px] font-medium text-slate-400 mt-0.5">${createdStr}</p>
+                        </div>
+                    </div>
+                    <div class="text-right shrink-0 ml-4">
+                        <span class="text-base font-bold ${amountColor}">${sign}${formatINR(Math.abs(transaction.amount)).replace('₹', '₹ ')}</span>
+                    </div>
+                </div>
+                
+                <div id="details-${transaction.id}" class="item-details-panel">
+                    <div class="flex justify-between items-center">
+                        <div class="text-[11px] text-slate-400 font-medium">
+                            <i class="fa-regular fa-clock mr-1"></i> Added: ${createdStr} ${updatedStr}
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="action-btn bg-slate-100 text-slate-600 hover:bg-slate-200" onclick="editTransaction('${transaction.id}', event)">
+                                <i class="fa-solid fa-pen text-[11px]"></i> Edit
+                            </button>
+                            <button class="action-btn bg-rose-50 text-rose-600 hover:bg-rose-100" onclick="removeTransaction('${transaction.id}', event)">
+                                <i class="fa-solid fa-trash-can text-[11px]"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            list.prepend(item); 
+        }
+
+        window.editTransaction = function(id, event) {
+            event.stopPropagation(); 
+            const transaction = transactions.find(t => t.id === id);
+            if (transaction) {
+                text.value = transaction.text === 'Unknown' ? '' : transaction.text;
+                amount.value = transaction.amount;
+                type.value = transaction.type;
+                editId = id;
+                openModal('Update Record', 'Save Changes');
+            }
+        }
+
+        window.removeTransaction = function(id, event) {
+            event.stopPropagation(); 
+            deleteId = id; 
+            deleteModal.style.display = 'flex'; 
+        }
+
+        confirmDeleteBtn.addEventListener('click', () => {
+            if (deleteId !== null) {
+                remove(ref(db, `transactions/${deleteId}`)).then(() => {
+                    showToast('Deleted Successfully', 'fa-trash', 'text-rose-400');
+                    if (editId === deleteId) { closeAndResetModal(); }
+                    closeDeleteModalFunc(); 
+                });
+            }
+        });
+
+        function updateValues() {
+            const wealth = transactions.filter(t => t.type === 'wealth').reduce((acc, t) => acc + t.amount, 0);
+            const expense = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+            
+            currentTotalBalance = wealth - expense;
+
+            balance.innerText = isBalanceHidden ? '₹ * * * * * *' : formatINR(currentTotalBalance);
+            money_plus.innerText = formatINR(wealth); 
+            money_minus.innerText = formatINR(expense); 
+            
+            historyCount.innerText = transactions.length;
+        }
+
+        function renderApp() {
+            list.innerHTML = '';
+            transactions.forEach(addTransactionDOM);
+            updateValues();
+        }
+
+        form.addEventListener('submit', addTransaction);
+    </script>
+</body>
+</html>
