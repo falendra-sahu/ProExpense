@@ -51,7 +51,6 @@
             position: relative;
         }
 
-        /* Ambient background orbs */
         body::before {
             content: '';
             position: fixed;
@@ -89,6 +88,30 @@
             box-shadow: var(--shadow), 0 0 0 1px rgba(255,255,255,0.03) inset;
         }
 
+        /* ── MOBILE FULLSCREEN ── */
+        @media (max-width: 899px) {
+            html, body {
+                height: 100%;
+                min-height: 100%;
+                overflow: hidden;
+                padding: 0;
+            }
+            body {
+                align-items: stretch;
+                justify-content: stretch;
+            }
+            .app {
+                max-width: 100%;
+                width: 100%;
+                height: 100%;
+                max-height: 100%;
+                min-height: 100%;
+                border-radius: 0;
+                border: none;
+                box-shadow: none;
+            }
+        }
+
         /* ── Header ── */
         .header {
             padding: 18px 20px 16px;
@@ -98,6 +121,25 @@
             justify-content: space-between;
             flex-shrink: 0;
             background: var(--surface);
+        }
+
+        /* Safe area support for notched phones */
+        @media (max-width: 899px) {
+            .header {
+                padding-top: max(18px, env(safe-area-inset-top, 18px));
+                padding-left: max(20px, env(safe-area-inset-left, 20px));
+                padding-right: max(20px, env(safe-area-inset-right, 20px));
+            }
+            .app-footer {
+                padding-bottom: max(10px, env(safe-area-inset-bottom, 10px));
+            }
+            .list-scroll {
+                padding-bottom: max(90px, calc(70px + env(safe-area-inset-bottom, 0px))) !important;
+            }
+            .fab {
+                bottom: max(20px, calc(16px + env(safe-area-inset-bottom, 0px))) !important;
+                right: max(20px, env(safe-area-inset-right, 20px)) !important;
+            }
         }
 
         .logo-wrap {
@@ -180,7 +222,6 @@
         .eye-btn:hover { background: var(--surface3); color: var(--text2); border-color: var(--border2); }
         .eye-btn i { font-size: 13px; }
 
-        /* Summary Pills */
         .summary-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -269,15 +310,12 @@
             letter-spacing: 0;
         }
 
-        /* Search */
         .search-wrap {
             padding: 0 24px 14px;
             flex-shrink: 0;
         }
 
-        .search-inner {
-            position: relative;
-        }
+        .search-inner { position: relative; }
 
         .search-inner i {
             position: absolute;
@@ -310,7 +348,6 @@
             box-shadow: 0 0 0 3px var(--accent-glow);
         }
 
-        /* Scrollable list */
         .list-scroll {
             flex: 1;
             overflow-y: auto;
@@ -321,7 +358,6 @@
 
         #list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
 
-        /* Transaction Item */
         .tx-item {
             background: var(--surface2);
             border: 1px solid var(--border);
@@ -390,7 +426,6 @@
         .tx-amount.income { color: var(--green); }
         .tx-amount.expense { color: var(--red); }
 
-        /* Details Panel */
         .tx-details {
             display: none;
             padding: 12px 16px 14px;
@@ -409,10 +444,7 @@
             margin-bottom: 10px;
         }
 
-        .tx-actions {
-            display: flex;
-            gap: 8px;
-        }
+        .tx-actions { display: flex; gap: 8px; }
 
         .action-btn {
             display: flex;
@@ -433,7 +465,6 @@
         .action-btn.delete { color: var(--red); }
         .action-btn.delete:hover { background: var(--red-dim); border-color: rgba(248,113,113,0.3); }
 
-        /* Empty state */
         .empty-state {
             display: flex;
             flex-direction: column;
@@ -519,6 +550,12 @@
             position: relative;
         }
 
+        @media (max-width: 899px) {
+            .modal-content {
+                padding-bottom: max(36px, calc(24px + env(safe-area-inset-bottom, 0px)));
+            }
+        }
+
         @media (min-width: 480px) {
             .modal-content {
                 border-radius: 24px;
@@ -569,7 +606,6 @@
         .close-btn:hover { background: var(--surface3); color: var(--text); border-color: var(--border2); }
         .close-btn i { font-size: 14px; }
 
-        /* Form Fields */
         .form-group { margin-bottom: 16px; }
 
         .form-label {
@@ -604,14 +640,8 @@
         }
         .form-control option { background: var(--surface2); }
 
-        /* Custom select wrapper with chevron */
-        .select-wrap {
-            position: relative;
-        }
-        .select-field {
-            padding-right: 36px;
-            cursor: pointer;
-        }
+        .select-wrap { position: relative; }
+        .select-field { padding-right: 36px; cursor: pointer; }
         .select-chevron {
             position: absolute;
             right: 13px;
@@ -627,7 +657,6 @@
             color: var(--accent);
         }
 
-        /* Type Toggle */
         .type-toggle {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -691,6 +720,11 @@
             max-width: 380px;
             text-align: center;
             animation: slideUp 0.35s cubic-bezier(0.16,1,0.3,1);
+        }
+        @media (max-width: 899px) {
+            .delete-modal-content {
+                padding-bottom: max(40px, calc(28px + env(safe-area-inset-bottom, 0px)));
+            }
         }
         @media (min-width: 480px) {
             .delete-modal-content {
@@ -772,12 +806,10 @@
         }
         .toast.show { opacity: 1; transform: translateY(0) scale(1); }
 
-        /* ── Scrollbar global ── */
         ::-webkit-scrollbar { width: 3px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 10px; }
 
-        /* Left panel base (mobile: stacked, flex-shrink:0 so it never collapses) */
         .left-panel {
             flex-shrink: 0;
             display: flex;
@@ -787,15 +819,14 @@
         /* ── PC Wide Layout ── */
         @media (min-width: 900px) {
             body { overflow: auto; align-items: center; padding: 24px; }
-            .app { 
-                max-width: 960px; 
-                flex-direction: row; 
-                height: 88vh; 
-                max-height: 780px; 
+            .app {
+                max-width: 960px;
+                flex-direction: row;
+                height: 88vh;
+                max-height: 780px;
                 min-height: 580px;
             }
 
-            /* Left panel - wider so amounts never truncate */
             .left-panel {
                 width: 380px;
                 flex-shrink: 0;
@@ -804,24 +835,20 @@
                 border-right: 1px solid var(--border);
             }
             .left-panel .header { border-bottom: 1px solid var(--border); }
-            .left-panel .balance-section { 
-                flex: 1; 
+            .left-panel .balance-section {
+                flex: 1;
                 border-bottom: none;
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
             }
 
-            /* Stack summary cards vertically on desktop so amounts have full width */
             .left-panel .summary-row {
                 grid-template-columns: 1fr;
                 gap: 10px;
             }
-            .left-panel .summary-info span {
-                font-size: 15px;
-            }
+            .left-panel .summary-info span { font-size: 15px; }
 
-            /* Right panel */
             .right-panel {
                 flex: 1;
                 display: flex;
@@ -877,9 +904,7 @@
 <body>
 
 <div class="app" id="app-root">
-    <!-- On desktop, left panel wraps header + balance -->
     <div class="left-panel" id="left-panel">
-        <!-- Header -->
         <div class="header">
             <div class="logo-wrap">
                 <div class="logo-icon">
@@ -895,7 +920,6 @@
             </button>
         </div>
 
-        <!-- Balance -->
         <div class="balance-section">
             <p class="balance-label">Total Balance</p>
             <div class="balance-row">
@@ -927,9 +951,7 @@
         </div>
     </div>
 
-    <!-- Right/Main panel: transactions -->
     <div class="list-area right-panel" id="right-panel">
-        <!-- List header -->
         <div class="list-header">
             <span class="list-title">
                 Transactions
@@ -937,7 +959,6 @@
             </span>
         </div>
 
-        <!-- Search -->
         <div class="search-wrap">
             <div class="search-inner">
                 <i class="fa-solid fa-magnifying-glass"></i>
@@ -945,17 +966,14 @@
             </div>
         </div>
 
-        <!-- Scrollable list -->
         <div class="list-scroll">
             <ul id="list"></ul>
         </div>
 
-        <!-- FAB -->
         <button class="fab" id="fab" title="Add Transaction">
             <i class="fa-solid fa-plus"></i>
         </button>
 
-        <!-- Footer inside right panel -->
         <div class="app-footer">
             <span>Powered by ❤️ Falendra Sahu</span>
         </div>
@@ -972,7 +990,6 @@
         </div>
 
         <form id="form">
-            <!-- Type Toggle (visual) -->
             <div style="margin-bottom:4px;">
                 <span class="form-label">Type</span>
             </div>
@@ -987,7 +1004,6 @@
                 </label>
             </div>
 
-            <!-- Hidden real select to keep JS logic intact -->
             <select id="type" style="display:none">
                 <option value="wealth">Income</option>
                 <option value="expense">Expense</option>
@@ -1033,7 +1049,6 @@
     </div>
 </div>
 
-<!-- Toasts -->
 <div class="toast-container" id="toast-container"></div>
 
 <script type="module">
@@ -1056,7 +1071,6 @@
     const analytics = getAnalytics(app);
     const db = getDatabase(app);
 
-    // DOM refs
     const balance        = document.getElementById('balance');
     const money_plus     = document.getElementById('money-plus');
     const money_minus    = document.getElementById('money-minus');
@@ -1087,7 +1101,6 @@
     let transactions = JSON.parse(localStorage.getItem('cachedTransactions')) || [];
     renderApp();
 
-    // Firebase sync
     const transRef = ref(db, 'transactions');
     onValue(transRef, (snap) => {
         const data = snap.val();
@@ -1101,22 +1114,16 @@
 
     const amountDisplay = document.getElementById('amount-display');
 
-    // Live thousand-separator formatting on amount input
     amountDisplay.addEventListener('input', () => {
         let raw = amountDisplay.value.replace(/[^0-9.]/g, '');
-        // Allow only one decimal point
         const parts = raw.split('.');
         if (parts.length > 2) raw = parts[0] + '.' + parts.slice(1).join('');
-        // Format integer part with Indian thousand separators
         const intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         const formatted = parts.length === 2 ? intPart + '.' + (parts[1] || '') : intPart;
-        // Preserve cursor by not overwriting if same
         amountDisplay.value = formatted;
-        // Store raw numeric value in hidden input
         amount.value = raw;
     });
 
-    // Sync display → hidden on paste
     amountDisplay.addEventListener('paste', () => setTimeout(() => amountDisplay.dispatchEvent(new Event('input')), 0));
     optIncome.addEventListener('click', () => setType('wealth'));
     optExpense.addEventListener('click', () => setType('expense'));
@@ -1297,10 +1304,9 @@
         if (!tx) return;
         text.value = tx.text === 'Unknown' ? '' : tx.text;
         amount.value = tx.amount;
-        // Format existing amount for display with thousand separators
         const num = parseFloat(tx.amount);
         const intPart = Math.floor(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-        const dec = (num % 1).toFixed(2).slice(1); // ".xx"
+        const dec = (num % 1).toFixed(2).slice(1);
         amountDisplay.value = intPart + dec;
         setType(tx.type);
         if (tx.type === 'expense') { populateSources(tx.sourceId); sourceContainer.style.display = 'block'; }
@@ -1351,7 +1357,6 @@
     function renderApp() { renderList(); updateValues(); }
     form.addEventListener('submit', addTransaction);
 
-    // ── Dark / Light Theme Toggle ──
     const themeBtn  = document.getElementById('theme-toggle-btn');
     const themeIcon = document.getElementById('theme-icon');
     const savedTheme = localStorage.getItem('peTheme') || 'dark';
